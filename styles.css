@@ -1,6 +1,6 @@
 /* ============================================================================
    FINAL LIGHT-MODE NEUMORPHIC DESIGN SYSTEM v1.0
-   Precise visual specs + functional state feedback
+   Mobile-optimized for 360px–430px viewports + safe-area support
    ============================================================================ */
 
 :root {
@@ -50,6 +50,9 @@
   --dur-fast: 120ms;
   --dur-med: 200ms;
   --ease-smooth: cubic-bezier(0.22, 0.9, 0.35, 1);
+  
+  /* TOUCH TARGETS */
+  --touch-min: 48px;
 }
 
 html[data-theme="dark"] {
@@ -86,6 +89,8 @@ html, body {
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  height: 100%;
+  width: 100%;
 }
 
 body {
@@ -94,12 +99,21 @@ body {
     radial-gradient(circle at 100% 100%, rgba(62, 123, 250, 0.04), transparent 45%);
   letter-spacing: -0.01em;
   transition: background-color var(--dur-med) var(--ease-smooth);
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
 }
 
 .app-shell {
   max-width: 980px;
+  width: 100%;
   margin: 0 auto;
-  padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px));
+  padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 16px));
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ============================================================================
@@ -111,9 +125,10 @@ body {
   border: 1px solid var(--border-light);
   box-shadow: var(--shadow-raised-md);
   border-radius: var(--radius-xl);
-  padding: 24px;
-  margin-bottom: 24px;
+  padding: 20px;
+  margin-bottom: 20px;
   animation: slideIn var(--dur-med) var(--ease-smooth) both;
+  flex-shrink: 0;
 }
 
 @keyframes slideIn {
@@ -135,7 +150,7 @@ body {
 
 .topbar h1 {
   font-family: 'Sora', system-ui, -apple-system, sans-serif;
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
   letter-spacing: -0.03em;
   color: var(--text-primary);
@@ -144,7 +159,7 @@ body {
 }
 
 .eyebrow {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -154,7 +169,7 @@ body {
 
 .page-switcher {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
   margin-top: 8px;
 }
@@ -162,17 +177,20 @@ body {
 .nav-chip {
   display: inline-flex;
   align-items: center;
-  padding: 8px 14px;
+  padding: 8px 12px;
   background: var(--surface-panel);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-pill);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
   cursor: pointer;
   transition: all var(--dur-fast) var(--ease-smooth);
   text-decoration: none;
   box-shadow: var(--shadow-raised-sm);
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
+  justify-content: center;
 }
 
 .nav-chip:hover {
@@ -180,6 +198,10 @@ body {
   color: var(--text-primary);
   transform: translateY(-1px);
   box-shadow: var(--shadow-raised-md);
+}
+
+.nav-chip:active {
+  transform: translateY(0);
 }
 
 .nav-chip.active {
@@ -199,7 +221,8 @@ body {
 .theme-toggle {
   display: inline-flex;
   align-items: center;
-  padding: 8px 14px;
+  justify-content: center;
+  padding: 10px 14px;
   background: var(--surface-panel);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-pill);
@@ -210,6 +233,8 @@ body {
   transition: all var(--dur-fast) var(--ease-smooth);
   box-shadow: var(--shadow-raised-sm);
   font-family: inherit;
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
 }
 
 .theme-toggle:hover {
@@ -231,8 +256,10 @@ body {
 .main-stack {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
   animation: fadeIn 0.5s ease-out 0.1s both;
+  flex: 1;
+  padding-bottom: env(safe-area-inset-bottom, 16px);
 }
 
 @keyframes fadeIn {
@@ -255,8 +282,10 @@ body {
   border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-raised-md);
-  padding: 20px;
+  padding: 18px;
   transition: all var(--dur-fast) var(--ease-smooth);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .walnut-panel:hover,
@@ -279,21 +308,21 @@ body {
 
 .hero {
   background: linear-gradient(135deg, var(--surface-raised) 0%, var(--surface-panel) 100%);
-  padding: 28px;
+  padding: 24px;
 }
 
 .hero h2 {
   font-family: 'Sora', system-ui, -apple-system, sans-serif;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--text-primary);
-  margin: 8px 0 12px 0;
+  margin: 8px 0 10px 0;
   line-height: 1.3;
 }
 
 .hero-copy {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-secondary);
   line-height: 1.6;
   margin: 0;
@@ -305,13 +334,13 @@ body {
 
 .field-label {
   display: block;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-tertiary);
   margin-bottom: 8px;
-  margin-top: 16px;
+  margin-top: 14px;
 }
 
 .field-label:first-of-type {
@@ -327,7 +356,7 @@ select,
 .neo-input {
   display: block;
   width: 100%;
-  padding: 12px 16px;
+  padding: 12px 14px;
   background: var(--surface-inset);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
@@ -337,6 +366,8 @@ select,
   box-shadow: var(--shadow-inset-sm);
   transition: all var(--dur-fast) var(--ease-smooth);
   outline: none;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 input[type="text"]:hover,
@@ -372,10 +403,15 @@ textarea,
   resize: vertical;
   min-height: 100px;
   line-height: 1.5;
+  font-family: inherit;
 }
 
 .walnut-textarea.tall {
-  min-height: 200px;
+  min-height: 180px;
+}
+
+select {
+  cursor: pointer;
 }
 
 /* ============================================================================
@@ -386,6 +422,8 @@ button {
   font-family: inherit;
   cursor: pointer;
   outline: none;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .pill-btn,
@@ -394,16 +432,18 @@ button {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 24px;
+  padding: 12px 20px;
   background: var(--accent-primary);
   color: #FAFBFC;
   border: none;
   border-radius: var(--radius-pill);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   box-shadow: var(--shadow-raised-md), 0 4px 12px rgba(0, 113, 227, 0.25);
   transition: all var(--dur-fast) var(--ease-smooth);
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
 }
 
 .pill-btn:hover,
@@ -436,16 +476,18 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 18px;
+  gap: 6px;
+  padding: 10px 16px;
   background: var(--surface-panel);
   color: var(--text-secondary);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-pill);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   box-shadow: var(--shadow-raised-sm);
   transition: all var(--dur-fast) var(--ease-smooth);
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
 }
 
 .ghost-btn:hover {
@@ -474,8 +516,15 @@ button {
 .action-row {
   display: flex;
   gap: 12px;
-  margin-top: 20px;
+  margin-top: 18px;
   flex-wrap: wrap;
+}
+
+.action-row .pill-btn,
+.action-row .primary-accent,
+.action-row .ghost-btn {
+  flex: 1;
+  min-width: 140px;
 }
 
 .stack-list {
@@ -489,10 +538,12 @@ button {
   background: var(--surface-panel);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: 14px;
   box-shadow: var(--shadow-raised-sm);
   transition: all var(--dur-fast) var(--ease-smooth);
   cursor: pointer;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .stack-list-item:hover {
@@ -507,11 +558,11 @@ button {
 
 .grid {
   display: grid;
-  gap: 16px;
+  gap: 14px;
 }
 
 .grid.two-up {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 }
 
 .metric-card {
@@ -520,7 +571,7 @@ button {
 
 .metric-card h3 {
   font-family: 'Sora', system-ui, -apple-system, sans-serif;
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 700;
   color: var(--accent-primary);
   margin: 8px 0 4px 0;
@@ -534,11 +585,11 @@ button {
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 6px 12px;
+  padding: 6px 10px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-pill);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--text-secondary);
   box-shadow: var(--shadow-raised-sm);
@@ -573,7 +624,7 @@ button {
    ============================================================================ */
 
 .library-stat {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--text-tertiary);
   margin-top: 8px;
@@ -581,7 +632,7 @@ button {
 }
 
 .small-note {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-tertiary);
   line-height: 1.5;
   margin: 8px 0 0 0;
@@ -591,39 +642,68 @@ button {
 .text-secondary { color: var(--text-secondary); }
 
 /* ============================================================================
-   RESPONSIVE
+   RESPONSIVE & ACCESSIBILITY
    ============================================================================ */
 
-@media (max-width: 768px) {
-  .app-shell {
-    padding: max(12px, env(safe-area-inset-top, 0px)) 12px max(12px, env(safe-area-inset-bottom, 0px));
-  }
-
+@media (max-width: 480px) {
   .topbar {
-    padding: 20px;
-    margin-bottom: 20px;
+    padding: 16px;
+    margin-bottom: 16px;
   }
 
   .topbar h1 {
-    font-size: 24px;
+    font-size: 22px;
+  }
+
+  .page-switcher {
+    gap: 4px;
+  }
+
+  .nav-chip {
+    padding: 6px 10px;
+    font-size: 11px;
   }
 
   .main-stack {
-    gap: 20px;
+    gap: 16px;
+  }
+
+  .walnut-panel,
+  .neo-panel,
+  .panel,
+  .card,
+  .form-panel,
+  .item-card {
+    padding: 14px;
+  }
+
+  .hero {
+    padding: 20px;
+  }
+
+  .hero h2 {
+    font-size: 20px;
+    margin-bottom: 8px;
   }
 
   .action-row {
     flex-direction: column;
+    margin-top: 16px;
   }
 
-  .pill-btn,
-  .primary-accent,
-  .ghost-btn {
+  .action-row .pill-btn,
+  .action-row .primary-accent,
+  .action-row .ghost-btn {
     width: 100%;
+    min-width: auto;
   }
 
   .grid.two-up {
     grid-template-columns: 1fr;
+  }
+
+  .metric-card h3 {
+    font-size: 24px;
   }
 }
 
@@ -632,4 +712,26 @@ button {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ============================================================================
+   CUSTOM SCROLLBAR (WebKit)
+   ============================================================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--shadow-dark);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
 }
