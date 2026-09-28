@@ -1,3 +1,8 @@
+/**
+ * Seamless SPA Router with Native Android View Transitions
+ * Handles async navigation, state management, and persistent UI elements
+ */
+
 const state = {
   notes: [],
   prompts: [],
@@ -8,6 +13,143 @@ const state = {
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+
+const ROUTES = {
+  '/': { page: 'index.html', id: 'dashboard' },
+  '/notes': { page: 'notes.html', id: 'notes' },
+  '/prompts': { page: 'prompts.html', id: 'prompts' },
+  '/gemini': { page: 'gemini.html', id: 'gemini' },
+  '/vault': { page: 'nexus-vault.html', id: 'vault' }
+};
+
+let currentRoute = window.location.pathname || '/';
+let isNavigating = false;
+
+/**
+ * Initialize router on DOM ready
+ */
+document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+  loadData();
+  setupThemeToggle();
+  setupDelegation();
+  setupPromptSearch();
+  initRouter();
+  renderNotes();
+  renderPrompts();
+  renderGeminiPreview();
+  renderLibraryPreview();
+  updateHomeStats();
+});
+
+/**
+ * Global click delegator for navigation hijacking
+ */
+document.addEventListener('click', (e) => {
+  const target = e.target.closest('a[href]');
+  if (!target) return;
+
+  const href = target.getAttribute('href');
+  if (!href || href.startsWith('http') || href.startsWith('mailto:') || href === '#') return;
+
+  e.preventDefault();
+  navigateTo(href);
+});
+
+/**
+ * Initialize router and handle popstate for back button
+ */
+function initRouter() {
+  window.addEventListener('popstate', () => {
+    const route = window.location.pathname || '/';
+    loadRoute(route, false);
+  });
+}
+
+/**
+ * Navigate to route with history management
+ */
+function navigateTo(route) {
+  if (isNavigating || route === currentRoute) return;
+
+  isNavigating = true;
+  currentRoute = route;
+  history.pushState(null, '', route);
+  loadRoute(route, true);
+}
+
+/**
+ * Load route content with native view transition
+ */
+async function loadRoute(route, animate = true) {
+  const routeConfig = ROUTES[route] || ROUTES['/'];
+  
+  try {
+    const response = await fetch(routeConfig.page);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    
+    const html = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    const newContent = doc.querySelector('main, #main-content');
+    if (!newContent) throw new Error('No main content found');
+    
+    const mainContainer = document.querySelector('#main-content');
+    if (!mainContainer) throw new Error('No main container found');
+    
+    // Use View Transition API with fallback
+    if (document.startViewTransition && animate) {
+      document.startViewTransition(() => {
+        updateDOMContent(mainContainer, newContent);
+      });
+    } else {
+      updateDOMContent(mainContainer, newContent);
+    }
+    
+    // Synchronize navigation after content update
+    syncNavigation();
+    
+    // Re-render dynamic content
+    setTimeout(() => {
+      renderNotes();
+      renderPrompts();
+      renderGeminiPreview();
+      renderLibraryPreview();
+      updateHomeStats();
+    }, 50);
+    
+  } catch (error) {
+    console.error('Navigation error:', error);
+    mainContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Error loading page</div>';
+  } finally {
+    isNavigating = false;
+  }
+}
+
+/**
+ * Update DOM content safely
+ */
+function updateDOMContent(container, newContent) {
+  container.innerHTML = newContent.innerHTML;
+  void container.offsetHeight; // Trigger reflow for animation
+}
+
+/**
+ * Synchronize bottom navigation with current route
+ */
+function syncNavigation() {
+  const navItems = document.querySelectorAll('[data-nav-item]');
+  
+  navItems.forEach((item) => {
+    const route = item.getAttribute('data-nav-item');
+    const isActive = route === currentRoute || 
+                     (route === '/' && (currentRoute === '/' || currentRoute === ''));
+    
+    item.classList.toggle('active', isActive);
+    item.setAttribute('aria-current', isActive ? 'page' : 'false');
+  });
+}
 
 function initTheme() {
   const saved = localStorage.getItem('app-theme') || 'light';
@@ -162,18 +304,18 @@ function renderNotes() {
   if (!list) return;
   
   if (state.notes.length === 0) {
-    list.innerHTML = '<div style=\"color: var(--text-muted); text-align: center; padding: 20px; font-size: 13px;\">No notes yet. Create one to get started!</div>';
+    list.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px; font-size: 13px;">No notes yet. Create one to get started!</div>';
     return;
   }
   
   list.innerHTML = state.notes.map(note => `
-    <div class=\"stack-list-item\" data-action=\"note-item\" data-id=\"${note.id}\">
-      <div style=\"font-weight: 600; color: var(--text-primary); margin-bottom: 6px;\">${escapeHtml(note.title)}</div>
-      <div style=\"font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 8px; white-space: pre-wrap; word-wrap: break-word;\">${escapeHtml(note.body.substring(0, 100))}${note.body.length > 100 ? '...' : ''}</div>
-      <div style=\"font-size: 11px; color: var(--text-muted); margin-bottom: 10px;\">${new Date(note.timestamp).toLocaleDateString()}</div>
-      <div style=\"display: flex; gap: 8px;\">
-        <button class=\"ghost-btn\" data-action=\"edit-note\" data-id=\"${note.id}\" style=\"flex: 1; font-size: 11px; padding: 8px 10px;\">✎ Edit</button>
-        <button class=\"ghost-btn\" data-action=\"delete-note\" data-id=\"${note.id}\" style=\"flex: 1; font-size: 11px; padding: 8px 10px; color: #ef4444;\">✕ Delete</button>
+    <div class="stack-list-item" data-action="note-item" data-id="${note.id}">
+      <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">${escapeHtml(note.title)}</div>
+      <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 8px; white-space: pre-wrap; word-wrap: break-word;">${escapeHtml(note.body.substring(0, 100))}${note.body.length > 100 ? '...' : ''}</div>
+      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">${new Date(note.timestamp).toLocaleDateString()}</div>
+      <div style="display: flex; gap: 8px;">
+        <button class="ghost-btn" data-action="edit-note" data-id="${note.id}" style="flex: 1; font-size: 11px; padding: 8px 10px;">✎ Edit</button>
+        <button class="ghost-btn" data-action="delete-note" data-id="${note.id}" style="flex: 1; font-size: 11px; padding: 8px 10px; color: #ef4444;">✕ Delete</button>
       </div>
     </div>
   `).join('');
@@ -260,18 +402,18 @@ function renderPrompts() {
   );
   
   if (filtered.length === 0) {
-    list.innerHTML = '<div style=\"color: var(--text-muted); text-align: center; padding: 20px; font-size: 13px;\">No prompts found.</div>';
+    list.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px; font-size: 13px;">No prompts found.</div>';
     return;
   }
   
   list.innerHTML = filtered.map(prompt => `
-    <div class=\"stack-list-item\" data-action=\"prompt-item\" data-id=\"${prompt.id}\">
-      <div style=\"font-weight: 600; color: var(--text-primary); margin-bottom: 6px;\">${escapeHtml(prompt.title)}</div>
-      <div style=\"font-size: 12px; color: var(--text-secondary); line-height: 1.4; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; white-space: pre-wrap; word-wrap: break-word;\">${escapeHtml(prompt.body.substring(0, 80))}${prompt.body.length > 80 ? '...' : ''}</div>
-      <div style=\"display: flex; gap: 8px;\">
-        <button class=\"ghost-btn\" data-action=\"copy-prompt\" data-id=\"${prompt.id}\" style=\"flex: 1; font-size: 11px; padding: 8px 10px;\">📋 Copy</button>
-        <button class=\"ghost-btn\" data-action=\"edit-prompt\" data-id=\"${prompt.id}\" style=\"flex: 1; font-size: 11px; padding: 8px 10px;\">✎ Edit</button>
-        <button class=\"ghost-btn\" data-action=\"delete-prompt\" data-id=\"${prompt.id}\" style=\"flex: 1; font-size: 11px; padding: 8px 10px; color: #ef4444;\">✕ Delete</button>
+    <div class="stack-list-item" data-action="prompt-item" data-id="${prompt.id}">
+      <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">${escapeHtml(prompt.title)}</div>
+      <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; white-space: pre-wrap; word-wrap: break-word;">${escapeHtml(prompt.body.substring(0, 100))}${prompt.body.length > 100 ? '...' : ''}</div>
+      <div style="display: flex; gap: 8px;">
+        <button class="ghost-btn" data-action="copy-prompt" data-id="${prompt.id}" style="flex: 1; font-size: 11px; padding: 8px 10px;">📋 Copy</button>
+        <button class="ghost-btn" data-action="edit-prompt" data-id="${prompt.id}" style="flex: 1; font-size: 11px; padding: 8px 10px;">✎ Edit</button>
+        <button class="ghost-btn" data-action="delete-prompt" data-id="${prompt.id}" style="flex: 1; font-size: 11px; padding: 8px 10px; color: #ef4444;">✕ Delete</button>
       </div>
     </div>
   `).join('');
@@ -415,14 +557,14 @@ function renderGeminiPreview() {
   if (!preview) return;
   
   if (state.prompts.length === 0) {
-    preview.innerHTML = '<div style=\"color: var(--text-muted); text-align: center; padding: 20px; font-size: 13px;\">No saved prompts to preview.</div>';
+    preview.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px; font-size: 13px;">No saved prompts to preview.</div>';
     return;
   }
   
   preview.innerHTML = state.prompts.slice(0, 3).map(prompt => `
-    <div class=\"stack-list-item\">
-      <div style=\"font-weight: 600; color: var(--text-primary); font-size: 13px; margin-bottom: 4px;\">${escapeHtml(prompt.title)}</div>
-      <div style=\"font-size: 11px; color: var(--text-secondary);\">${escapeHtml(prompt.body.substring(0, 60))}...</div>
+    <div class="stack-list-item">
+      <div style="font-weight: 600; color: var(--text-primary); font-size: 13px; margin-bottom: 4px;">${escapeHtml(prompt.title)}</div>
+      <div style="font-size: 11px; color: var(--text-secondary);">${escapeHtml(prompt.body.substring(0, 60))}...</div>
     </div>
   `).join('');
 }
@@ -432,34 +574,14 @@ function renderLibraryPreview() {
   if (!preview) return;
   
   if (state.prompts.length === 0) {
-    preview.innerHTML = '<div style=\"color: var(--text-muted); text-align: center; padding: 20px; font-size: 13px;\">No prompts saved yet. Create one in the Prompts section.</div>';
+    preview.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px; font-size: 13px;">No prompts saved yet. Create one in the Prompts section.</div>';
     return;
   }
   
   preview.innerHTML = state.prompts.slice(0, 2).map(prompt => `
-    <div class=\"stack-list-item\">
-      <div style=\"font-weight: 600; color: var(--text-primary); font-size: 13px; margin-bottom: 4px;\">${escapeHtml(prompt.title)}</div>
-      <div style=\"font-size: 11px; color: var(--text-secondary);\">${escapeHtml(prompt.body.substring(0, 60))}...</div>
+    <div class="stack-list-item">
+      <div style="font-weight: 600; color: var(--text-primary); font-size: 13px; margin-bottom: 4px;">${escapeHtml(prompt.title)}</div>
+      <div style="font-size: 11px; color: var(--text-secondary);">${escapeHtml(prompt.body.substring(0, 60))}...</div>
     </div>
   `).join('');
-}
-
-function initApp() {
-  initTheme();
-  loadData();
-  setupThemeToggle();
-  setupDelegation();
-  setupPromptSearch();
-
-  renderNotes();
-  renderPrompts();
-  renderGeminiPreview();
-  renderLibraryPreview();
-  updateHomeStats();
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initApp);
-} else {
-  initApp();
 }
