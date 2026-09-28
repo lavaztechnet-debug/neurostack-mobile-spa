@@ -24,10 +24,8 @@ const ROUTES = {
 
 let currentRoute = window.location.pathname || '/';
 let isNavigating = false;
+let pageTimers = [];
 
-/**
- * Initialize router on DOM ready
- */
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   loadData();
@@ -42,9 +40,6 @@ document.addEventListener('DOMContentLoaded', () => {
   updateHomeStats();
 });
 
-/**
- * Global click delegator for navigation hijacking
- */
 document.addEventListener('click', (e) => {
   const target = e.target.closest('a[href]');
   if (!target) return;
@@ -56,34 +51,34 @@ document.addEventListener('click', (e) => {
   navigateTo(href);
 });
 
-/**
- * Initialize router and handle popstate for back button
- */
 function initRouter() {
   window.addEventListener('popstate', () => {
     const route = window.location.pathname || '/';
+    clearPageTimers();
     loadRoute(route, false);
   });
 }
 
-/**
- * Navigate to route with history management
- */
 function navigateTo(route) {
   if (isNavigating || route === currentRoute) return;
 
   isNavigating = true;
   currentRoute = route;
   history.pushState(null, '', route);
+  clearPageTimers();
   loadRoute(route, true);
 }
 
-/**
- * Load route content with native view transition
- */
 async function loadRoute(route, animate = true) {
   const routeConfig = ROUTES[route] || ROUTES['/'];
+  const mainContainer = document.querySelector('#main-content');
   
+  if (!mainContainer) {
+    console.error('No main container found');
+    isNavigating = false;
+    return;
+  }
+
   try {
     const response = await fetch(routeConfig.page);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -94,23 +89,17 @@ async function loadRoute(route, animate = true) {
     
     const newContent = doc.querySelector('main, #main-content');
     if (!newContent) throw new Error('No main content found');
-    
-    const mainContainer = document.querySelector('#main-content');
-    if (!mainContainer) throw new Error('No main container found');
-    
-    // Use View Transition API with fallback
+
     if (document.startViewTransition && animate) {
       document.startViewTransition(() => {
-        updateDOMContent(mainContainer, newContent);
+        mainContainer.innerHTML = newContent.innerHTML;
       });
     } else {
-      updateDOMContent(mainContainer, newContent);
+      mainContainer.innerHTML = newContent.innerHTML;
     }
     
-    // Synchronize navigation after content update
     syncNavigation();
     
-    // Re-render dynamic content
     setTimeout(() => {
       renderNotes();
       renderPrompts();
@@ -127,28 +116,23 @@ async function loadRoute(route, animate = true) {
   }
 }
 
-/**
- * Update DOM content safely
- */
-function updateDOMContent(container, newContent) {
-  container.innerHTML = newContent.innerHTML;
-  void container.offsetHeight; // Trigger reflow for animation
-}
-
-/**
- * Synchronize bottom navigation with current route
- */
 function syncNavigation() {
   const navItems = document.querySelectorAll('[data-nav-item]');
-  
   navItems.forEach((item) => {
     const route = item.getAttribute('data-nav-item');
-    const isActive = route === currentRoute || 
-                     (route === '/' && (currentRoute === '/' || currentRoute === ''));
-    
+    const isActive = route === currentRoute || (route === '/' && (currentRoute === '/' || currentRoute === ''));
     item.classList.toggle('active', isActive);
     item.setAttribute('aria-current', isActive ? 'page' : 'false');
   });
+}
+
+function clearPageTimers() {
+  pageTimers.forEach(id => clearTimeout(id));
+  pageTimers = [];
+}
+
+function registerTimer(id) {
+  pageTimers.push(id);
 }
 
 function initTheme() {
@@ -224,10 +208,12 @@ function showToast(message) {
   toast.textContent = message;
   document.body.appendChild(toast);
   
-  setTimeout(() => {
+  const hideTimer = setTimeout(() => {
     toast.style.animation = 'slideOut var(--dur-fast) var(--ease-smooth)';
-    setTimeout(() => toast.remove(), 120);
+    const removeTimer = setTimeout(() => toast.remove(), 120);
+    registerTimer(removeTimer);
   }, 2000);
+  registerTimer(hideTimer);
 }
 
 function copyToClipboard(text) {
@@ -276,24 +262,22 @@ function saveNote() {
   
   state.notes.unshift(note);
   saveData();
-  
   titleInput.value = '';
   bodyInput.value = '';
-  
   renderNotes();
   showToast('✓ Note saved');
   
   const btn = $('#saveNoteBtn');
   if (btn) {
     btn.classList.add('active');
-    setTimeout(() => btn.classList.remove('active'), 1500);
+    const timer = setTimeout(() => btn.classList.remove('active'), 1500);
+    registerTimer(timer);
   }
 }
 
 function clearNoteForm() {
   const titleInput = $('#noteTitle');
   const bodyInput = $('#noteBody');
-  
   if (titleInput) titleInput.value = '';
   if (bodyInput) bodyInput.value = '';
   showToast('Form cleared');
@@ -363,20 +347,18 @@ function savePrompt() {
   
   state.prompts.unshift(prompt);
   saveData();
-  
   titleInput.value = '';
   bodyInput.value = '';
-
   const searchInput = $('#promptSearch');
   if (searchInput) searchInput.value = '';
-
   renderPrompts();
   showToast('✓ Prompt saved');
   
   const btn = $('#savePromptBtn');
   if (btn) {
     btn.classList.add('active');
-    setTimeout(() => btn.classList.remove('active'), 1500);
+    const timer = setTimeout(() => btn.classList.remove('active'), 1500);
+    registerTimer(timer);
   }
 }
 
@@ -384,7 +366,6 @@ function clearPromptForm() {
   const titleInput = $('#promptTitle');
   const bodyInput = $('#promptBody');
   const searchInput = $('#promptSearch');
-
   if (titleInput) titleInput.value = '';
   if (bodyInput) bodyInput.value = '';
   if (searchInput) searchInput.value = '';
@@ -417,7 +398,6 @@ function renderPrompts() {
       </div>
     </div>
   `).join('');
-  
   updateLibraryStat();
 }
 
@@ -465,61 +445,53 @@ function setupDelegation() {
       e.preventDefault();
       saveNote();
     }
-    
     if (action === 'clear-note') {
       e.preventDefault();
       clearNoteForm();
     }
-    
     if (action === 'edit-note' && id) {
       e.preventDefault();
       editNote(id);
     }
-    
     if (action === 'delete-note' && id) {
       e.preventDefault();
       deleteNote(id);
     }
-    
     if (action === 'save-prompt') {
       e.preventDefault();
       savePrompt();
     }
-    
     if (action === 'clear-prompt') {
       e.preventDefault();
       clearPromptForm();
     }
-    
     if (action === 'edit-prompt' && id) {
       e.preventDefault();
       editPrompt(id);
     }
-    
     if (action === 'delete-prompt' && id) {
       e.preventDefault();
       deletePrompt(id);
     }
-    
     if (action === 'copy-prompt' && id) {
       e.preventDefault();
       copyPrompt(id);
       e.target.closest('[data-action]').classList.add('active');
-      setTimeout(() => e.target.closest('[data-action]').classList.remove('active'), 1500);
+      const timer = setTimeout(() => e.target.closest('[data-action]').classList.remove('active'), 1500);
+      registerTimer(timer);
     }
-    
     if (action === 'copy-gemini') {
       e.preventDefault();
       const textarea = $('#geminiPrompt');
       if (textarea && textarea.value.trim()) {
         copyToClipboard(textarea.value);
         e.target.closest('[data-action]').classList.add('active');
-        setTimeout(() => e.target.closest('[data-action]').classList.remove('active'), 1500);
+        const timer = setTimeout(() => e.target.closest('[data-action]').classList.remove('active'), 1500);
+        registerTimer(timer);
       } else {
         showToast('Prompt is empty');
       }
     }
-    
     if (action === 'open-gemini') {
       e.preventDefault();
       const textarea = $('#geminiPrompt');
@@ -542,25 +514,18 @@ function setupPromptSearch() {
 
 function updateHomeStats() {
   const noteCount = $('#noteCount');
-  if (noteCount) {
-    noteCount.textContent = state.notes.length;
-  }
-  
+  if (noteCount) noteCount.textContent = state.notes.length;
   const promptCount = $('#promptCount');
-  if (promptCount) {
-    promptCount.textContent = state.prompts.length;
-  }
+  if (promptCount) promptCount.textContent = state.prompts.length;
 }
 
 function renderGeminiPreview() {
   const preview = $('#geminiPromptPreview');
   if (!preview) return;
-  
   if (state.prompts.length === 0) {
     preview.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px; font-size: 13px;">No saved prompts to preview.</div>';
     return;
   }
-  
   preview.innerHTML = state.prompts.slice(0, 3).map(prompt => `
     <div class="stack-list-item">
       <div style="font-weight: 600; color: var(--text-primary); font-size: 13px; margin-bottom: 4px;">${escapeHtml(prompt.title)}</div>
@@ -572,12 +537,10 @@ function renderGeminiPreview() {
 function renderLibraryPreview() {
   const preview = $('#libraryPreview');
   if (!preview) return;
-  
   if (state.prompts.length === 0) {
     preview.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px; font-size: 13px;">No prompts saved yet. Create one in the Prompts section.</div>';
     return;
   }
-  
   preview.innerHTML = state.prompts.slice(0, 2).map(prompt => `
     <div class="stack-list-item">
       <div style="font-weight: 600; color: var(--text-primary); font-size: 13px; margin-bottom: 4px;">${escapeHtml(prompt.title)}</div>
