@@ -21,7 +21,11 @@
         </div>
       </div>
       <div class="header-actions">
-        <button id="themeToggle" class="theme-toggle" type="button">Dark theme</button>
+        <div class="theme-switcher" aria-label="Material theme switcher" role="tablist">
+          <button class="theme-option active" type="button" data-theme-option="stealth" role="tab" aria-selected="true">Stealth</button>
+          <button class="theme-option" type="button" data-theme-option="ceramic" role="tab" aria-selected="false">Ceramic</button>
+          <button class="theme-option" type="button" data-theme-option="silicone" role="tab" aria-selected="false">Silicone</button>
+        </div>
       </div>
     </header>
 
@@ -41,6 +45,38 @@
           <p class="eyebrow">Saved prompts</p>
           <h3 id="promptCount">0</h3>
         </article>
+      </section>
+
+      <section class="walnut-panel material-demo-panel">
+        <p class="eyebrow">Material physics</p>
+        <div class="demo-grid">
+          <div class="demo-card demo-button-card">
+            <p class="demo-label">Primary Button</p>
+            <button class="demo-primary-btn" type="button">Launch</button>
+          </div>
+
+          <div class="demo-card demo-surface-card">
+            <p class="demo-label">Surface Card</p>
+            <div class="demo-surface-box">
+              <span class="demo-kicker">Signal</span>
+              <strong>Adaptive depth</strong>
+            </div>
+          </div>
+
+          <div class="demo-card demo-switch-card">
+            <p class="demo-label">Segmented Switch</p>
+            <div class="demo-switch">
+              <button class="demo-switch-option active" type="button">Stealth</button>
+              <button class="demo-switch-option" type="button">Ceramic</button>
+              <button class="demo-switch-option" type="button">Silicone</button>
+            </div>
+          </div>
+
+          <div class="demo-card demo-display-card">
+            <p class="demo-label">Depressed Value</p>
+            <div class="depressed-value">84.2</div>
+          </div>
+        </div>
       </section>
 
       <section class="walnut-panel">
