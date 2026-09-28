@@ -1,10 +1,9 @@
-/* ============================================================================
+/* ============================================================================ 
    FINAL LIGHT-MODE NEUMORPHIC DESIGN SYSTEM v1.0
    Mobile-optimized for 360px–430px viewports + safe-area support
    ============================================================================ */
 
 :root {
-  /* BACKGROUND & SURFACES */
   --bg-primary: #E8EEF5;
   --bg-secondary: #F0F3F8;
   --bg-tertiary: #E0E6F0;
@@ -12,13 +11,11 @@
   --surface-panel: #F5F7FB;
   --surface-inset: #DFE5ED;
   
-  /* TYPOGRAPHY */
   --text-primary: #1E293B;
   --text-secondary: #475569;
   --text-tertiary: #64748B;
   --text-muted: #94A3B8;
   
-  /* SHADOWS - Dual neumorphic effect */
   --shadow-light: rgba(255, 255, 255, 0.85);
   --shadow-dark: rgba(148, 163, 184, 0.35);
   --shadow-raised-sm: 2px 2px 5px var(--shadow-dark), -2px -2px 5px var(--shadow-light);
@@ -27,18 +24,15 @@
   --shadow-inset-sm: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light);
   --shadow-inset-md: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
   
-  /* ACCENTS */
   --accent-primary: #0071E3;
   --accent-primary-hover: #0066CC;
   --accent-secondary: #6C9EFC;
   
-  /* STATUS BADGES */
   --status-beginner: #06B6D4;
   --status-intermediate: #F59E0B;
   --status-advanced: #F43F5E;
   --status-active: #10B981;
   
-  /* STRUCTURE */
   --border-light: rgba(0, 0, 0, 0.06);
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -46,12 +40,9 @@
   --radius-xl: 20px;
   --radius-pill: 24px;
   
-  /* ANIMATION */
   --dur-fast: 120ms;
   --dur-med: 200ms;
   --ease-smooth: cubic-bezier(0.22, 0.9, 0.35, 1);
-  
-  /* TOUCH TARGETS */
   --touch-min: 48px;
 }
 
@@ -115,10 +106,6 @@ body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
-
-/* ============================================================================
-   HEADER & NAVIGATION
-   ============================================================================ */
 
 .topbar {
   background: var(--surface-raised);
@@ -249,10 +236,6 @@ body {
   box-shadow: var(--shadow-raised-sm);
 }
 
-/* ============================================================================
-   MAIN CONTENT
-   ============================================================================ */
-
 .main-stack {
   display: flex;
   flex-direction: column;
@@ -266,10 +249,6 @@ body {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
-/* ============================================================================
-   PANELS & CARDS
-   ============================================================================ */
 
 .walnut-panel,
 .neo-panel,
@@ -327,10 +306,6 @@ body {
   line-height: 1.6;
   margin: 0;
 }
-
-/* ============================================================================
-   FORM ELEMENTS
-   ============================================================================ */
 
 .field-label {
   display: block;
@@ -413,10 +388,6 @@ textarea,
 select {
   cursor: pointer;
 }
-
-/* ============================================================================
-   BUTTONS
-   ============================================================================ */
 
 button {
   font-family: inherit;
@@ -509,10 +480,6 @@ button {
   box-shadow: var(--shadow-raised-md);
 }
 
-/* ============================================================================
-   LAYOUTS & ACTIONS
-   ============================================================================ */
-
 .action-row {
   display: flex;
   gap: 12px;
@@ -578,10 +545,6 @@ button {
   line-height: 1;
 }
 
-/* ============================================================================
-   BADGES
-   ============================================================================ */
-
 .badge {
   display: inline-flex;
   align-items: center;
@@ -619,10 +582,6 @@ button {
   border-color: rgba(16, 185, 129, 0.3);
 }
 
-/* ============================================================================
-   UTILITIES
-   ============================================================================ */
-
 .library-stat {
   font-size: 11px;
   font-weight: 600;
@@ -640,10 +599,6 @@ button {
 
 .text-muted { color: var(--text-muted); }
 .text-secondary { color: var(--text-secondary); }
-
-/* ============================================================================
-   RESPONSIVE & ACCESSIBILITY
-   ============================================================================ */
 
 @media (max-width: 480px) {
   .topbar {
@@ -713,10 +668,6 @@ button {
     transition-duration: 0.01ms !important;
   }
 }
-
-/* ============================================================================
-   CUSTOM SCROLLBAR (WebKit)
-   ============================================================================ */
 
 ::-webkit-scrollbar {
   width: 8px;
