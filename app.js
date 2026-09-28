@@ -105,10 +105,10 @@ function escapeHtml(text) {
     '&': '&amp;',
     '<': '&lt;',
     '>': '&gt;',
-    '"': '&quot;',
+    '\"': '&quot;',
     "'": '&#39;'
   };
-  return text.replace(/[&<>"']/g, c => map[c]);
+  return text.replace(/[&<>\"']/g, c => map[c]);
 }
 
 function saveNote() {
@@ -162,18 +162,18 @@ function renderNotes() {
   if (!list) return;
   
   if (state.notes.length === 0) {
-    list.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px; font-size: 13px;">No notes yet. Create one to get started!</div>';
+    list.innerHTML = '<div style=\"color: var(--text-muted); text-align: center; padding: 20px; font-size: 13px;\">No notes yet. Create one to get started!</div>';
     return;
   }
   
   list.innerHTML = state.notes.map(note => `
-    <div class="stack-list-item" data-action="note-item" data-id="${note.id}">
-      <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">${escapeHtml(note.title)}</div>
-      <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 8px; white-space: pre-wrap; word-wrap: break-word;">${escapeHtml(note.body.substring(0, 100))}${note.body.length > 100 ? '...' : ''}</div>
-      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">${new Date(note.timestamp).toLocaleDateString()}</div>
-      <div style="display: flex; gap: 8px;">
-        <button class="ghost-btn" data-action="edit-note" data-id="${note.id}" style="flex: 1; font-size: 11px; padding: 8px 10px;">✎ Edit</button>
-        <button class="ghost-btn" data-action="delete-note" data-id="${note.id}" style="flex: 1; font-size: 11px; padding: 8px 10px; color: #ef4444;">✕ Delete</button>
+    <div class=\"stack-list-item\" data-action=\"note-item\" data-id=\"${note.id}\">
+      <div style=\"font-weight: 600; color: var(--text-primary); margin-bottom: 6px;\">${escapeHtml(note.title)}</div>
+      <div style=\"font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 8px; white-space: pre-wrap; word-wrap: break-word;\">${escapeHtml(note.body.substring(0, 100))}${note.body.length > 100 ? '...' : ''}</div>
+      <div style=\"font-size: 11px; color: var(--text-muted); margin-bottom: 10px;\">${new Date(note.timestamp).toLocaleDateString()}</div>
+      <div style=\"display: flex; gap: 8px;\">
+        <button class=\"ghost-btn\" data-action=\"edit-note\" data-id=\"${note.id}\" style=\"flex: 1; font-size: 11px; padding: 8px 10px;\">✎ Edit</button>
+        <button class=\"ghost-btn\" data-action=\"delete-note\" data-id=\"${note.id}\" style=\"flex: 1; font-size: 11px; padding: 8px 10px; color: #ef4444;\">✕ Delete</button>
       </div>
     </div>
   `).join('');
@@ -224,10 +224,10 @@ function savePrompt() {
   
   titleInput.value = '';
   bodyInput.value = '';
-  
+
   const searchInput = $('#promptSearch');
   if (searchInput) searchInput.value = '';
-  
+
   renderPrompts();
   showToast('✓ Prompt saved');
   
@@ -242,7 +242,7 @@ function clearPromptForm() {
   const titleInput = $('#promptTitle');
   const bodyInput = $('#promptBody');
   const searchInput = $('#promptSearch');
-  
+
   if (titleInput) titleInput.value = '';
   if (bodyInput) bodyInput.value = '';
   if (searchInput) searchInput.value = '';
@@ -260,18 +260,18 @@ function renderPrompts() {
   );
   
   if (filtered.length === 0) {
-    list.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px; font-size: 13px;">No prompts found.</div>';
+    list.innerHTML = '<div style=\"color: var(--text-muted); text-align: center; padding: 20px; font-size: 13px;\">No prompts found.</div>';
     return;
   }
   
   list.innerHTML = filtered.map(prompt => `
-    <div class="stack-list-item" data-action="prompt-item" data-id="${prompt.id}">
-      <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">${escapeHtml(prompt.title)}</div>
-      <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; white-space: pre-wrap; word-wrap: break-word;">${escapeHtml(prompt.body.substring(0, 80))}${prompt.body.length > 80 ? '...' : ''}</div>
-      <div style="display: flex; gap: 8px;">
-        <button class="ghost-btn" data-action="copy-prompt" data-id="${prompt.id}" style="flex: 1; font-size: 11px; padding: 8px 10px;">📋 Copy</button>
-        <button class="ghost-btn" data-action="edit-prompt" data-id="${prompt.id}" style="flex: 1; font-size: 11px; padding: 8px 10px;">✎ Edit</button>
-        <button class="ghost-btn" data-action="delete-prompt" data-id="${prompt.id}" style="flex: 1; font-size: 11px; padding: 8px 10px; color: #ef4444;">✕ Delete</button>
+    <div class=\"stack-list-item\" data-action=\"prompt-item\" data-id=\"${prompt.id}\">
+      <div style=\"font-weight: 600; color: var(--text-primary); margin-bottom: 6px;\">${escapeHtml(prompt.title)}</div>
+      <div style=\"font-size: 12px; color: var(--text-secondary); line-height: 1.4; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; white-space: pre-wrap; word-wrap: break-word;\">${escapeHtml(prompt.body.substring(0, 80))}${prompt.body.length > 80 ? '...' : ''}</div>
+      <div style=\"display: flex; gap: 8px;\">
+        <button class=\"ghost-btn\" data-action=\"copy-prompt\" data-id=\"${prompt.id}\" style=\"flex: 1; font-size: 11px; padding: 8px 10px;\">📋 Copy</button>
+        <button class=\"ghost-btn\" data-action=\"edit-prompt\" data-id=\"${prompt.id}\" style=\"flex: 1; font-size: 11px; padding: 8px 10px;\">✎ Edit</button>
+        <button class=\"ghost-btn\" data-action=\"delete-prompt\" data-id=\"${prompt.id}\" style=\"flex: 1; font-size: 11px; padding: 8px 10px; color: #ef4444;\">✕ Delete</button>
       </div>
     </div>
   `).join('');
@@ -415,14 +415,14 @@ function renderGeminiPreview() {
   if (!preview) return;
   
   if (state.prompts.length === 0) {
-    preview.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px; font-size: 13px;">No saved prompts to preview.</div>';
+    preview.innerHTML = '<div style=\"color: var(--text-muted); text-align: center; padding: 20px; font-size: 13px;\">No saved prompts to preview.</div>';
     return;
   }
   
   preview.innerHTML = state.prompts.slice(0, 3).map(prompt => `
-    <div class="stack-list-item">
-      <div style="font-weight: 600; color: var(--text-primary); font-size: 13px; margin-bottom: 4px;">${escapeHtml(prompt.title)}</div>
-      <div style="font-size: 11px; color: var(--text-secondary);">${escapeHtml(prompt.body.substring(0, 60))}...</div>
+    <div class=\"stack-list-item\">
+      <div style=\"font-weight: 600; color: var(--text-primary); font-size: 13px; margin-bottom: 4px;\">${escapeHtml(prompt.title)}</div>
+      <div style=\"font-size: 11px; color: var(--text-secondary);\">${escapeHtml(prompt.body.substring(0, 60))}...</div>
     </div>
   `).join('');
 }
@@ -432,14 +432,14 @@ function renderLibraryPreview() {
   if (!preview) return;
   
   if (state.prompts.length === 0) {
-    preview.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px; font-size: 13px;">No prompts saved yet. Create one in the Prompts section.</div>';
+    preview.innerHTML = '<div style=\"color: var(--text-muted); text-align: center; padding: 20px; font-size: 13px;\">No prompts saved yet. Create one in the Prompts section.</div>';
     return;
   }
   
   preview.innerHTML = state.prompts.slice(0, 2).map(prompt => `
-    <div class="stack-list-item">
-      <div style="font-weight: 600; color: var(--text-primary); font-size: 13px; margin-bottom: 4px;">${escapeHtml(prompt.title)}</div>
-      <div style="font-size: 11px; color: var(--text-secondary);">${escapeHtml(prompt.body.substring(0, 60))}...</div>
+    <div class=\"stack-list-item\">
+      <div style=\"font-weight: 600; color: var(--text-primary); font-size: 13px; margin-bottom: 4px;\">${escapeHtml(prompt.title)}</div>
+      <div style=\"font-size: 11px; color: var(--text-secondary);\">${escapeHtml(prompt.body.substring(0, 60))}...</div>
     </div>
   `).join('');
 }
@@ -450,7 +450,7 @@ function initApp() {
   setupThemeToggle();
   setupDelegation();
   setupPromptSearch();
-  
+
   renderNotes();
   renderPrompts();
   renderGeminiPreview();
