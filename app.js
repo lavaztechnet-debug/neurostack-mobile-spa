@@ -6,11 +6,9 @@ const state = {
   }
 };
 
-// Utility: Query selectors
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
-// Initialize theme
 function initTheme() {
   const saved = localStorage.getItem('app-theme') || 'light';
   document.documentElement.setAttribute('data-theme', saved);
@@ -19,28 +17,24 @@ function initTheme() {
 }
 
 function updateThemeToggle() {
-  const toggle = $('#themeToggle');
-  if (toggle) {
+  $$('#themeToggle').forEach(toggle => {
     toggle.textContent = state.settings.theme === 'dark' ? 'Light theme' : 'Dark theme';
-  }
+  });
 }
 
-// Theme toggle
 function setupThemeToggle() {
-  const toggle = $('#themeToggle');
-  if (toggle) {
-    toggle.addEventListener('click', () => {
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('#themeToggle')) {
       const current = document.documentElement.getAttribute('data-theme');
       const next = current === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
       localStorage.setItem('app-theme', next);
       state.settings.theme = next;
       updateThemeToggle();
-    });
-  }
+    }
+  });
 }
 
-// Load from localStorage
 function loadData() {
   try {
     const saved = localStorage.getItem('app-data');
@@ -54,7 +48,6 @@ function loadData() {
   }
 }
 
-// Save to localStorage
 function saveData() {
   try {
     localStorage.setItem('app-data', JSON.stringify({
@@ -66,34 +59,35 @@ function saveData() {
   }
 }
 
-// Toast notification
 function showToast(message) {
   const toast = document.createElement('div');
   toast.style.cssText = `
     position: fixed;
-    bottom: 20px;
+    bottom: max(20px, env(safe-area-inset-bottom, 20px));
     left: 50%;
     transform: translateX(-50%);
     background: var(--surface-raised);
     color: var(--text-primary);
-    padding: 12px 20px;
+    padding: 12px 18px;
     border-radius: var(--radius-pill);
     box-shadow: var(--shadow-raised-md);
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     z-index: 1000;
-    animation: slideIn 0.2s ease-out;
+    animation: slideIn var(--dur-fast) var(--ease-smooth);
+    pointer-events: none;
+    max-width: calc(100vw - 40px);
+    word-wrap: break-word;
   `;
   toast.textContent = message;
   document.body.appendChild(toast);
   
   setTimeout(() => {
-    toast.style.animation = 'slideOut 0.2s ease-out';
-    setTimeout(() => toast.remove(), 200);
+    toast.style.animation = 'slideOut var(--dur-fast) var(--ease-smooth)';
+    setTimeout(() => toast.remove(), 120);
   }, 2000);
 }
 
-// Copy to clipboard
 function copyToClipboard(text) {
   return navigator.clipboard.writeText(text)
     .then(() => {
@@ -106,7 +100,17 @@ function copyToClipboard(text) {
     });
 }
 
-// Save note
+function escapeHtml(text) {
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  };
+  return text.replace(/[&<>"']/g, c => map[c]);
+}
+
 function saveNote() {
   const titleInput = $('#noteTitle');
   const bodyInput = $('#noteBody');
@@ -136,41 +140,45 @@ function saveNote() {
   
   renderNotes();
   showToast('✓ Note saved');
+  
+  const btn = $('#saveNoteBtn');
+  if (btn) {
+    btn.classList.add('active');
+    setTimeout(() => btn.classList.remove('active'), 1500);
+  }
 }
 
-// Clear note form
 function clearNoteForm() {
   const titleInput = $('#noteTitle');
   const bodyInput = $('#noteBody');
   
   if (titleInput) titleInput.value = '';
   if (bodyInput) bodyInput.value = '';
+  showToast('Form cleared');
 }
 
-// Render notes list
 function renderNotes() {
   const list = $('#notesList');
   if (!list) return;
   
   if (state.notes.length === 0) {
-    list.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">No notes yet. Create one to get started!</p>';
+    list.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px; font-size: 13px;">No notes yet. Create one to get started!</div>';
     return;
   }
   
   list.innerHTML = state.notes.map(note => `
-    <div class="stack-list-item" data-note-id="${note.id}">
+    <div class="stack-list-item" data-action="note-item" data-id="${note.id}">
       <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">${escapeHtml(note.title)}</div>
-      <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 8px;">${escapeHtml(note.body)}</div>
-      <div style="font-size: 11px; color: var(--text-muted);">${new Date(note.timestamp).toLocaleDateString()}</div>
-      <div style="margin-top: 12px; display: flex; gap: 8px;">
-        <button class="ghost-btn edit-note-btn" data-note-id="${note.id}" style="flex: 1; font-size: 12px; padding: 8px 12px;">Edit</button>
-        <button class="ghost-btn delete-note-btn" data-note-id="${note.id}" style="flex: 1; font-size: 12px; padding: 8px 12px; color: #ef4444;">Delete</button>
+      <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 8px; white-space: pre-wrap; word-wrap: break-word;">${escapeHtml(note.body.substring(0, 100))}${note.body.length > 100 ? '...' : ''}</div>
+      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">${new Date(note.timestamp).toLocaleDateString()}</div>
+      <div style="display: flex; gap: 8px;">
+        <button class="ghost-btn" data-action="edit-note" data-id="${note.id}" style="flex: 1; font-size: 11px; padding: 8px 10px;">✎ Edit</button>
+        <button class="ghost-btn" data-action="delete-note" data-id="${note.id}" style="flex: 1; font-size: 11px; padding: 8px 10px; color: #ef4444;">✕ Delete</button>
       </div>
     </div>
   `).join('');
 }
 
-// Delete note
 function deleteNote(id) {
   state.notes = state.notes.filter(n => n.id !== id);
   saveData();
@@ -178,7 +186,6 @@ function deleteNote(id) {
   showToast('✓ Note deleted');
 }
 
-// Edit note
 function editNote(id) {
   const note = state.notes.find(n => n.id === id);
   if (note) {
@@ -191,7 +198,6 @@ function editNote(id) {
   }
 }
 
-// Save prompt
 function savePrompt() {
   const titleInput = $('#promptTitle');
   const bodyInput = $('#promptBody');
@@ -219,11 +225,19 @@ function savePrompt() {
   titleInput.value = '';
   bodyInput.value = '';
   
+  const searchInput = $('#promptSearch');
+  if (searchInput) searchInput.value = '';
+  
   renderPrompts();
   showToast('✓ Prompt saved');
+  
+  const btn = $('#savePromptBtn');
+  if (btn) {
+    btn.classList.add('active');
+    setTimeout(() => btn.classList.remove('active'), 1500);
+  }
 }
 
-// Clear prompt form
 function clearPromptForm() {
   const titleInput = $('#promptTitle');
   const bodyInput = $('#promptBody');
@@ -232,9 +246,9 @@ function clearPromptForm() {
   if (titleInput) titleInput.value = '';
   if (bodyInput) bodyInput.value = '';
   if (searchInput) searchInput.value = '';
+  showToast('Form cleared');
 }
 
-// Render prompts list
 function renderPrompts() {
   const list = $('#promptsList');
   if (!list) return;
@@ -246,24 +260,32 @@ function renderPrompts() {
   );
   
   if (filtered.length === 0) {
-    list.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">No prompts found.</p>';
+    list.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px; font-size: 13px;">No prompts found.</div>';
     return;
   }
   
   list.innerHTML = filtered.map(prompt => `
-    <div class="stack-list-item" data-prompt-id="${prompt.id}">
+    <div class="stack-list-item" data-action="prompt-item" data-id="${prompt.id}">
       <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">${escapeHtml(prompt.title)}</div>
-      <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace;">${escapeHtml(prompt.body.substring(0, 120))}${prompt.body.length > 120 ? '...' : ''}</div>
+      <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; white-space: pre-wrap; word-wrap: break-word;">${escapeHtml(prompt.body.substring(0, 80))}${prompt.body.length > 80 ? '...' : ''}</div>
       <div style="display: flex; gap: 8px;">
-        <button class="ghost-btn copy-prompt-btn" data-prompt-id="${prompt.id}" style="flex: 1; font-size: 12px; padding: 8px 12px;">📋 Copy</button>
-        <button class="ghost-btn edit-prompt-btn" data-prompt-id="${prompt.id}" style="flex: 1; font-size: 12px; padding: 8px 12px;">✎ Edit</button>
-        <button class="ghost-btn delete-prompt-btn" data-prompt-id="${prompt.id}" style="flex: 1; font-size: 12px; padding: 8px 12px; color: #ef4444;">✕ Delete</button>
+        <button class="ghost-btn" data-action="copy-prompt" data-id="${prompt.id}" style="flex: 1; font-size: 11px; padding: 8px 10px;">📋 Copy</button>
+        <button class="ghost-btn" data-action="edit-prompt" data-id="${prompt.id}" style="flex: 1; font-size: 11px; padding: 8px 10px;">✎ Edit</button>
+        <button class="ghost-btn" data-action="delete-prompt" data-id="${prompt.id}" style="flex: 1; font-size: 11px; padding: 8px 10px; color: #ef4444;">✕ Delete</button>
       </div>
     </div>
   `).join('');
+  
+  updateLibraryStat();
 }
 
-// Delete prompt
+function updateLibraryStat() {
+  const stat = $('#libraryStat');
+  if (stat) {
+    stat.textContent = `Library items: ${state.prompts.length}`;
+  }
+}
+
 function deletePrompt(id) {
   state.prompts = state.prompts.filter(p => p.id !== id);
   saveData();
@@ -271,7 +293,6 @@ function deletePrompt(id) {
   showToast('✓ Prompt deleted');
 }
 
-// Edit prompt
 function editPrompt(id) {
   const prompt = state.prompts.find(p => p.id === id);
   if (prompt) {
@@ -284,153 +305,159 @@ function editPrompt(id) {
   }
 }
 
-// Copy prompt
 function copyPrompt(id) {
   const prompt = state.prompts.find(p => p.id === id);
   if (prompt) {
     copyToClipboard(prompt.body);
-    const btn = $(`[data-prompt-id="${id}"].copy-prompt-btn`);
-    if (btn) {
-      btn.classList.add('active');
-      setTimeout(() => btn.classList.remove('active'), 1500);
+  }
+}
+
+function setupDelegation() {
+  document.addEventListener('click', (e) => {
+    const action = e.target.closest('[data-action]')?.dataset.action;
+    const id = e.target.closest('[data-id]')?.dataset.id;
+    
+    if (!action) return;
+    
+    if (action === 'save-note') {
+      e.preventDefault();
+      saveNote();
     }
-  }
-}
-
-// Search prompts
-function setupPromptSearch() {
-  const searchInput = $('#promptSearch');
-  if (searchInput) {
-    searchInput.addEventListener('input', renderPrompts);
-  }
-}
-
-// Gemini copy button
-function setupGeminiCopy() {
-  const copyBtn = $('#copyGeminiBtn');
-  if (copyBtn) {
-    copyBtn.addEventListener('click', async () => {
+    
+    if (action === 'clear-note') {
+      e.preventDefault();
+      clearNoteForm();
+    }
+    
+    if (action === 'edit-note' && id) {
+      e.preventDefault();
+      editNote(id);
+    }
+    
+    if (action === 'delete-note' && id) {
+      e.preventDefault();
+      deleteNote(id);
+    }
+    
+    if (action === 'save-prompt') {
+      e.preventDefault();
+      savePrompt();
+    }
+    
+    if (action === 'clear-prompt') {
+      e.preventDefault();
+      clearPromptForm();
+    }
+    
+    if (action === 'edit-prompt' && id) {
+      e.preventDefault();
+      editPrompt(id);
+    }
+    
+    if (action === 'delete-prompt' && id) {
+      e.preventDefault();
+      deletePrompt(id);
+    }
+    
+    if (action === 'copy-prompt' && id) {
+      e.preventDefault();
+      copyPrompt(id);
+      e.target.closest('[data-action]').classList.add('active');
+      setTimeout(() => e.target.closest('[data-action]').classList.remove('active'), 1500);
+    }
+    
+    if (action === 'copy-gemini') {
+      e.preventDefault();
       const textarea = $('#geminiPrompt');
       if (textarea && textarea.value.trim()) {
-        const success = await copyToClipboard(textarea.value);
-        if (success) {
-          copyBtn.classList.add('active');
-          setTimeout(() => copyBtn.classList.remove('active'), 1500);
-        }
+        copyToClipboard(textarea.value);
+        e.target.closest('[data-action]').classList.add('active');
+        setTimeout(() => e.target.closest('[data-action]').classList.remove('active'), 1500);
       } else {
         showToast('Prompt is empty');
       }
-    });
-  }
-}
-
-// Event delegation for notes
-function setupNotesEvents() {
-  const list = $('#notesList');
-  if (list) {
-    list.addEventListener('click', (e) => {
-      if (e.target.classList.contains('delete-note-btn')) {
-        deleteNote(e.target.dataset.noteId);
+    }
+    
+    if (action === 'open-gemini') {
+      e.preventDefault();
+      const textarea = $('#geminiPrompt');
+      if (textarea && textarea.value.trim()) {
+        window.open('https://gemini.google.com', '_blank');
+      } else {
+        showToast('Draft a prompt first');
       }
-      if (e.target.classList.contains('edit-note-btn')) {
-        editNote(e.target.dataset.noteId);
-      }
-    });
+    }
+  });
+}
+
+function setupPromptSearch() {
+  document.addEventListener('input', (e) => {
+    if (e.target.closest('#promptSearch')) {
+      renderPrompts();
+    }
+  });
+}
+
+function updateHomeStats() {
+  const noteCount = $('#noteCount');
+  if (noteCount) {
+    noteCount.textContent = state.notes.length;
+  }
+  
+  const promptCount = $('#promptCount');
+  if (promptCount) {
+    promptCount.textContent = state.prompts.length;
   }
 }
 
-// Event delegation for prompts
-function setupPromptsEvents() {
-  const list = $('#promptsList');
-  if (list) {
-    list.addEventListener('click', (e) => {
-      if (e.target.classList.contains('delete-prompt-btn')) {
-        deletePrompt(e.target.dataset.promptId);
-      }
-      if (e.target.classList.contains('edit-prompt-btn')) {
-        editPrompt(e.target.dataset.promptId);
-      }
-      if (e.target.classList.contains('copy-prompt-btn')) {
-        copyPrompt(e.target.dataset.promptId);
-      }
-    });
+function renderGeminiPreview() {
+  const preview = $('#geminiPromptPreview');
+  if (!preview) return;
+  
+  if (state.prompts.length === 0) {
+    preview.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px; font-size: 13px;">No saved prompts to preview.</div>';
+    return;
   }
+  
+  preview.innerHTML = state.prompts.slice(0, 3).map(prompt => `
+    <div class="stack-list-item">
+      <div style="font-weight: 600; color: var(--text-primary); font-size: 13px; margin-bottom: 4px;">${escapeHtml(prompt.title)}</div>
+      <div style="font-size: 11px; color: var(--text-secondary);">${escapeHtml(prompt.body.substring(0, 60))}...</div>
+    </div>
+  `).join('');
 }
 
-// HTML escape
-function escapeHtml(text) {
-  const map = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;'
-  };
-  return text.replace(/[&<>"']/g, c => map[c]);
-}
-
-// Save note button
-function setupNoteSaveBtn() {
-  const btn = $('#saveNoteBtn');
-  if (btn) {
-    btn.addEventListener('click', saveNote);
+function renderLibraryPreview() {
+  const preview = $('#libraryPreview');
+  if (!preview) return;
+  
+  if (state.prompts.length === 0) {
+    preview.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px; font-size: 13px;">No prompts saved yet. Create one in the Prompts section.</div>';
+    return;
   }
+  
+  preview.innerHTML = state.prompts.slice(0, 2).map(prompt => `
+    <div class="stack-list-item">
+      <div style="font-weight: 600; color: var(--text-primary); font-size: 13px; margin-bottom: 4px;">${escapeHtml(prompt.title)}</div>
+      <div style="font-size: 11px; color: var(--text-secondary);">${escapeHtml(prompt.body.substring(0, 60))}...</div>
+    </div>
+  `).join('');
 }
 
-// Clear note button
-function setupNoteClearBtn() {
-  const btn = $('#clearNoteBtn');
-  if (btn) {
-    btn.addEventListener('click', clearNoteForm);
-  }
-}
-
-// Save prompt button
-function setupPromptSaveBtn() {
-  const btn = $('#savePromptBtn');
-  if (btn) {
-    btn.addEventListener('click', savePrompt);
-  }
-}
-
-// Clear prompt button
-function setupPromptClearBtn() {
-  const btn = $('#clearPromptBtn');
-  if (btn) {
-    btn.addEventListener('click', clearPromptForm);
-  }
-}
-
-// Initialize app
 function initApp() {
   initTheme();
   loadData();
-  
   setupThemeToggle();
-  setupNoteSaveBtn();
-  setupNoteClearBtn();
-  setupPromptSaveBtn();
-  setupPromptClearBtn();
+  setupDelegation();
   setupPromptSearch();
-  setupNotesEvents();
-  setupPromptsEvents();
-  setupGeminiCopy();
   
   renderNotes();
   renderPrompts();
-  
-  // Update counts
-  const notesCount = $('#noteCount');
-  if (notesCount) notesCount.textContent = state.notes.length;
-  
-  const promptsCount = $('#promptCount');
-  if (promptsCount) promptsCount.textContent = state.prompts.length;
-  
-  const libraryStat = $('#libraryStat');
-  if (libraryStat) libraryStat.textContent = `Library items: ${state.prompts.length}`;
+  renderGeminiPreview();
+  renderLibraryPreview();
+  updateHomeStats();
 }
 
-// Start on DOM ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initApp);
 } else {
