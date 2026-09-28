@@ -1,13 +1,8 @@
-/**
- * Seamless SPA Router with Native Android View Transitions
- * Handles async navigation, state management, and persistent UI elements
- */
-
 const state = {
   notes: [],
   prompts: [],
   settings: {
-    theme: 'light'
+    theme: 'ceramic'
   }
 };
 
@@ -25,6 +20,36 @@ const ROUTES = {
 let currentRoute = window.location.pathname || '/';
 let isNavigating = false;
 let pageTimers = [];
+
+const MATERIAL_THEMES = ['stealth', 'ceramic', 'silicone'];
+
+function setMaterialTheme(themeName) {
+  const safeTheme = MATERIAL_THEMES.includes(themeName) ? themeName : 'ceramic';
+  document.documentElement.setAttribute('data-material-theme', safeTheme);
+  localStorage.setItem('app-material-theme', safeTheme);
+  state.settings.theme = safeTheme;
+
+  $$('.theme-option').forEach((button) => {
+    const isActive = button.dataset.themeOption === safeTheme;
+    button.classList.toggle('active', isActive);
+    button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+  });
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('app-material-theme') || 'ceramic';
+  setMaterialTheme(saved);
+}
+
+function setupThemeToggle() {
+  document.addEventListener('click', (e) => {
+    const option = e.target.closest('[data-theme-option]');
+    if (!option) return;
+
+    const nextTheme = option.dataset.themeOption;
+    if (nextTheme) setMaterialTheme(nextTheme);
+  });
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
@@ -135,32 +160,6 @@ function registerTimer(id) {
   pageTimers.push(id);
 }
 
-function initTheme() {
-  const saved = localStorage.getItem('app-theme') || 'light';
-  document.documentElement.setAttribute('data-theme', saved);
-  state.settings.theme = saved;
-  updateThemeToggle();
-}
-
-function updateThemeToggle() {
-  $$('#themeToggle').forEach(toggle => {
-    toggle.textContent = state.settings.theme === 'dark' ? 'Light theme' : 'Dark theme';
-  });
-}
-
-function setupThemeToggle() {
-  document.addEventListener('click', (e) => {
-    if (e.target.closest('#themeToggle')) {
-      const current = document.documentElement.getAttribute('data-theme');
-      const next = current === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('app-theme', next);
-      state.settings.theme = next;
-      updateThemeToggle();
-    }
-  });
-}
-
 function loadData() {
   try {
     const saved = localStorage.getItem('app-data');
@@ -233,10 +232,10 @@ function escapeHtml(text) {
     '&': '&amp;',
     '<': '&lt;',
     '>': '&gt;',
-    '\"': '&quot;',
+    '"': '&quot;',
     "'": '&#39;'
   };
-  return text.replace(/[&<>\"']/g, c => map[c]);
+  return text.replace(/[&<>"']/g, c => map[c]);
 }
 
 function saveNote() {
@@ -390,7 +389,7 @@ function renderPrompts() {
   list.innerHTML = filtered.map(prompt => `
     <div class="stack-list-item" data-action="prompt-item" data-id="${prompt.id}">
       <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">${escapeHtml(prompt.title)}</div>
-      <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; white-space: pre-wrap; word-wrap: break-word;">${escapeHtml(prompt.body.substring(0, 100))}${prompt.body.length > 100 ? '...' : ''}</div>
+      <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; white-space: pre-wrap; word-wrap: break-word;">${escapeHtml(prompt.body.substring(0, 180))}${prompt.body.length > 180 ? '...' : ''}</div>
       <div style="display: flex; gap: 8px;">
         <button class="ghost-btn" data-action="copy-prompt" data-id="${prompt.id}" style="flex: 1; font-size: 11px; padding: 8px 10px;">📋 Copy</button>
         <button class="ghost-btn" data-action="edit-prompt" data-id="${prompt.id}" style="flex: 1; font-size: 11px; padding: 8px 10px;">✎ Edit</button>
